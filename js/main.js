@@ -1,3 +1,6 @@
+'use strict'
+
+// Assignment
 const $ = function(y) { return document.querySelector(y); };
 const $$ = function(y) { return document.querySelectorAll(y); };
 const cartButton = $("#cart-button");
@@ -13,8 +16,16 @@ const btnOut = $(".button-out");
 const btnLogin = $(".button-login");
 const passwordInput = $("#password");
 const alertBlock = $("#alert");
+const cardsRestaurants = $(".cards-restaurants");
+const logo = $(".logo");
+const restaurants = $(".restaurants");
+const menu = $(".menu");
+const cardsMenu = $(".cards-menu");
 
 let login = localStorage.getItem('Delivery');
+
+
+// Functions
 window.alert = function(title, message){
   var myElToShow = $("#alert");
   myElToShow.innerHTML = title + "</br>" + message + "<br> <a id='alertBtn'>OK</a>"; 
@@ -27,9 +38,6 @@ function toggleModal() {
 function toggleModalAuth() {
   modalAuth.classList.toggle('is-open');
 }
-
-cartButton.addEventListener('click', toggleModal);
-close.addEventListener('click', toggleModal);
 
 function authorized() {
   console.log("авторизован");
@@ -64,8 +72,6 @@ function notAuthorized() {
     passwordInput.style.border = '';
   });
 
-  
-  
   function logIn(e) {
 
     e.preventDefault();
@@ -122,4 +128,89 @@ function authorization() {
   }
 }
 
+function createCardRestaurant() {
+  const cardRestaurant = `
+    <a class="card card-restaurant">
+      <img src="img/pizza-plus/preview.jpg" alt="image" class="card-image"/>
+      <div class="card-text">
+        <div class="card-heading">
+          <h3 class="card-title">Пицца плюс</h3>
+          <span class="card-tag tag">50 мин</span>
+        </div>
+        <div class="card-info">
+          <div class="rating">
+            4.5
+          </div>
+          <div class="price">От 900 ₽</div>
+          <div class="category">Пицца</div>
+        </div>
+      </div>
+    </a>
+  `;
+
+  cardsRestaurants.insertAdjacentHTML('beforeend', cardRestaurant);
+
+}
+
+function openMenu(e) {
+  const target = e.target;
+  const restaurant = target.closest(".card-restaurant");
+  const card = `
+    <div class="card">
+      <img src="img/pizza-plus/pizza-vesuvius.jpg" alt="image" class="card-image"/>
+      <div class="card-text">
+        <div class="card-heading">
+          <h3 class="card-title card-title-reg">Пицца Везувий</h3>
+      </div>
+      <div class="card-info">
+        <div class="ingredients">Соус томатный, сыр «Моцарелла», ветчина, пепперони, перец
+          «Халапенье», соус «Тобаско», томаты.
+        </div>
+      </div>
+      <div class="card-buttons">
+        <button class="button button-primary button-add-cart">
+          <span class="button-card-text">В корзину</span>
+          <span class="button-cart-svg"></span>
+        </button>
+        <strong class="card-price-bold">545 ₽</strong>
+      </div>
+    </div>
+  `;
+  
+  if(restaurant) {
+
+    if(login) {
+      menu.classList.remove("hide");
+      restaurants.classList.add("hide");
+  
+      cardsMenu.textContent = '';
+  
+      cardsMenu.insertAdjacentHTML('beforeend', card);
+      cardsMenu.insertAdjacentHTML('beforeend', card);
+      cardsMenu.insertAdjacentHTML('beforeend', card);
+    }
+
+    else {
+      toggleModalAuth();
+    }
+  }
+    
+}
+
+// Event listeners
+cartButton.addEventListener('click', toggleModal);
+
+close.addEventListener('click', toggleModal);
+
+logo.addEventListener('click', () => {
+  restaurants.classList.remove("hide");
+  menu.classList.add("hide");
+});
+
+cardsRestaurants.addEventListener('click', openMenu);
+
+// Call functions
+createCardRestaurant();
+createCardRestaurant();
+createCardRestaurant();
 authorization();
