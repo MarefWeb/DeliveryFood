@@ -21,6 +21,10 @@ const logo = $(".logo");
 const restaurants = $(".restaurants");
 const menu = $(".menu");
 const cardsMenu = $(".cards-menu");
+const restaurantTitle = $(".restaurant-title");
+const restaurantPrice = $(".price");
+const restaurantCategory = $(".category");
+const rating = $(".rating");
 
 let login = localStorage.getItem('Delivery');
 
@@ -128,21 +132,21 @@ function authorization() {
   }
 }
 
-function createCardRestaurant() {
+function createCardRestaurant({image, kitchen, name, price, stars, time_of_delivery: timeOfDelivery, products}) {
   const cardRestaurant = `
-    <a class="card card-restaurant">
-      <img src="img/pizza-plus/preview.jpg" alt="image" class="card-image"/>
+    <a class="card card-restaurant" data-products="${products}" data-components="${[name, price, stars, kitchen]}">
+      <img src="${image}" alt="image" class="card-image"/>
       <div class="card-text">
         <div class="card-heading">
-          <h3 class="card-title">Пицца плюс</h3>
-          <span class="card-tag tag">50 мин</span>
+          <h3 class="card-title">${name}</h3>
+          <span class="card-tag tag">${timeOfDelivery} мин</span>
         </div>
         <div class="card-info">
           <div class="rating">
-            4.5
+            ${stars}
           </div>
-          <div class="price">От 900 ₽</div>
-          <div class="category">Пицца</div>
+          <div class="price">От ${price} ₽</div>
+          <div class="category">${kitchen}</div>
         </div>
       </div>
     </a>
@@ -152,19 +156,17 @@ function createCardRestaurant() {
 
 }
 
-function openMenu(e) {
-  const target = e.target;
-  const restaurant = target.closest(".card-restaurant");
+function productCard({description, image, name, price}) {
   const card = `
     <div class="card">
-      <img src="img/pizza-plus/pizza-vesuvius.jpg" alt="image" class="card-image"/>
+      <img src="${image}" alt="image" class="card-image"/>
       <div class="card-text">
         <div class="card-heading">
-          <h3 class="card-title card-title-reg">Пицца Везувий</h3>
+          <h3 class="card-title card-title-reg">${name}</h3>
       </div>
       <div class="card-info">
-        <div class="ingredients">Соус томатный, сыр «Моцарелла», ветчина, пепперони, перец
-          «Халапенье», соус «Тобаско», томаты.
+        <div class="ingredients">
+        ${description}
         </div>
       </div>
       <div class="card-buttons">
@@ -172,22 +174,34 @@ function openMenu(e) {
           <span class="button-card-text">В корзину</span>
           <span class="button-cart-svg"></span>
         </button>
-        <strong class="card-price-bold">545 ₽</strong>
+        <strong class="card-price-bold">${price} ₽</strong>
       </div>
     </div>
   `;
+
+  cardsMenu.insertAdjacentHTML('beforeend', card);
+}
+
+function openMenu(e) {
+  const target = e.target;
+  const restaurant = target.closest(".card-restaurant");
   
   if(restaurant) {
 
     if(login) {
+      const [ name, price, stars, category ] = restaurant.dataset.components.split(',');
+      restaurantTitle.textContent = name;
+      restaurantPrice.textContent = `${price} ₽`;
+      restaurantCategory.textContent = category;
+      rating.textContent = stars;
+      cardsMenu.textContent = '';
+
       menu.classList.remove("hide");
       restaurants.classList.add("hide");
-  
-      cardsMenu.textContent = '';
-  
-      cardsMenu.insertAdjacentHTML('beforeend', card);
-      cardsMenu.insertAdjacentHTML('beforeend', card);
-      cardsMenu.insertAdjacentHTML('beforeend', card);
+      
+      getData(`./db/${restaurant.dataset.products}`).then(function(data) {
+        data.forEach(productCard);
+      })
     }
 
     else {
@@ -196,6 +210,21 @@ function openMenu(e) {
   }
     
 }
+
+async function getData(url) {
+  const response = await fetch(url);
+
+  if(!response.ok) {
+    throw new Error(`Ошибка по адрессу ${url}, статус ошибки: ${response.status}`);
+  }
+
+  return await response.json(); 
+}
+
+
+getData('./db/partners.json').then(function(data) {
+  data.forEach(createCardRestaurant);
+});
 
 // Event listeners
 cartButton.addEventListener('click', toggleModal);
@@ -210,7 +239,4 @@ logo.addEventListener('click', () => {
 cardsRestaurants.addEventListener('click', openMenu);
 
 // Call functions
-createCardRestaurant();
-createCardRestaurant();
-createCardRestaurant();
 authorization();
