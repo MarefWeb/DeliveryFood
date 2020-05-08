@@ -25,6 +25,17 @@ const restaurantTitle = $(".restaurant-title");
 const restaurantPrice = $(".price");
 const restaurantCategory = $(".category");
 const rating = $(".rating");
+const btnCart = $(".button-cart");
+const modalBody = $(".modal-body");
+const modalPrice = $(".modal-pricetag");
+const counterBtn = $(".counter-button");
+const counterMinus = $(".counter-minus");
+const counterPlus = $(".counter-plus");
+const clearCart = $(".clear-cart");
+
+const cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+localStorage.setItem('cart', JSON.stringify(cart));
 
 let login = localStorage.getItem('Delivery');
 
@@ -47,8 +58,9 @@ function authorized() {
   console.log("авторизован");
   userName.textContent = login;
 
+  btnCart.style.display = "flex";
   userName.style.display = 'inline';
-  btnOut.style.display = 'block';
+  btnOut.style.display = 'flex';
   btnAuth.style.display = 'none';
 
   btnOut.addEventListener('click', logOut);
@@ -64,6 +76,7 @@ function authorized() {
 function notAuthorized() {
   console.log("не авторизован");  
     
+  btnCart.style.display = '';
   userName.style.display = '';
   btnOut.style.display = '';
   btnAuth.style.display = 'block';
@@ -156,10 +169,10 @@ function createCardRestaurant({image, kitchen, name, price, stars, time_of_deliv
 
 }
 
-function productCard({description, image, name, price}) {
+function productCard({description, image, name, price, id}) {
   const card = `
-    <div class="card">
-      <img src="${image}" alt="image" class="card-image"/>
+    <div class="card"  id="${id}">
+      <img src="${image}" alt="image" class="card-image">
       <div class="card-text">
         <div class="card-heading">
           <h3 class="card-title card-title-reg">${name}</h3>
@@ -221,13 +234,92 @@ async function getData(url) {
   return await response.json(); 
 }
 
+function addToCart(e) {
+  const target = e.target.closest('.button-add-cart');
+  
+  if(target) {
+    const card = target.closest('.card');
+    const title = card.querySelector('.card-heading').textContent;
+    const cost = card.querySelector('.card-price-bold').textContent;
+    const id = card.id;
 
+    const food = cart.find(function(item) {
+      return item.id === id;
+    });
+
+    if(food) {
+      food.counter += 1;
+    }
+
+    else {
+      cart.push({title, cost, id, counter: 1});
+    }
+    
+  }
+
+  localStorage.setItem('cart', JSON.stringify(cart));
+}
+
+function renderCartInner() {
+  modalBody.textContent = '';
+
+  cart.forEach(function({title, cost, id, counter}) {
+    const cartRow = `
+      <div class="food-row" id="${id}">
+        <span class="food-name">${title}</span>
+        <strong class="food-price">${cost}</strong>
+        <div class="food-counter">
+          <button class="counter-button counter-minus">-</button>
+          <span class="counter">${counter}</span>
+          <button class="counter-button counter-plus">+</button>
+        </div>
+      </div>
+    `;
+
+    modalBody.insertAdjacentHTML('afterbegin', cartRow);
+  });
+
+  const totalPrice = cart.reduce(function(res, item){
+    return res + (parseFloat(item.cost) * item.counter);
+  }, 0)
+
+  modalPrice.textContent = totalPrice + ' ₽';
+}
+
+function modalCount(e) {
+  const target = e.target;
+  if(target.classList.contains('counter-button')) {
+    const foodRow = target.closest('.food-row');
+    const food = cart.find(function(item) {
+      return item.id === foodRow.id;
+    });
+    
+    if(target.classList.contains('counter-minus')) {
+      food.counter--;
+      if (food.counter == 0) {
+        cart.splice(cart.indexOf(food), 1);
+      }
+    }
+
+    if(target.classList.contains('counter-plus')) food.counter++;
+    renderCartInner();
+  }
+}
+
+function cancel() {
+  cart.length = 0;
+  renderCartInner();
+}
+
+// Event listeners
 getData('./db/partners.json').then(function(data) {
   data.forEach(createCardRestaurant);
 });
 
-// Event listeners
-cartButton.addEventListener('click', toggleModal);
+cartButton.addEventListener('click', function() {
+  renderCartInner();
+  toggleModal();
+});
 
 close.addEventListener('click', toggleModal);
 
@@ -237,6 +329,12 @@ logo.addEventListener('click', () => {
 });
 
 cardsRestaurants.addEventListener('click', openMenu);
+
+cardsMenu.addEventListener('click', addToCart);
+
+modalBody.addEventListener('click', modalCount);
+
+clearCart.addEventListener('click', cancel);
 
 // Call functions
 authorization();
