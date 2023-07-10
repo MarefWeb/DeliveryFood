@@ -1,2 +1,1 @@
-# Маленький проект из интесива для практики js
-Небольшая практика.
+# Bootcamp project for javascript practice
